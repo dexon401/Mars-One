@@ -6,8 +6,26 @@
                 <h2>Works Log</h2>
             </div>
         </div>
-        {% for job in jobs %}
-            
+        {% for job, leader in data %}
+            <div class="row"><div class="col"><h3>Action # {{ loop.index }}</h3></div></div>
+            <div class="row" style="background-color: darkgray;">
+                <div class="col">Title of activity</div>
+                <div class="col">Team leader</div>
+                <div class="col">Duration</div>
+                <div class="col">List of collaborators</div>
+                <div class="col">Is finished</div>
+            </div>
+            <div class="row" style="background-color: lightblue;">
+                <div class="col">{{ job.job }}</div>
+                <div class="col">{{ leader.name }} {{ leader.surname }}</div>
+                <div class="col">{{ job.work_size }}</div>
+                <div class="col">{{ job.collaborators }}</div>
+                {% if job.is_finished %}
+                    <div class="col" style="background-color: lightgreen;">Is finished</div>
+                {% else %}
+                    <div class="col" style="background-color: lightpink;">Is not finished</div>
+                {% endif %}
+            </div>
         {% endfor %}
     </div>
 {% endblock %}
