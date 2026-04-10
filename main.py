@@ -9,7 +9,7 @@ from flask_login import (
 )
 from forms.user import RegisterForm, LoginForm
 from forms.job import NewJobForm
-from data import db_session
+from data import db_session, jobs_api
 from data.users import User
 from data.jobs import Jobs
 
@@ -93,6 +93,8 @@ def main():
 
     db_sess.commit()
 
+    app.register_blueprint(jobs_api.blueprint)
+    
     app.run()
 
 
