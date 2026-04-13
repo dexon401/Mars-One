@@ -5,43 +5,6 @@ from pprint import pprint, pformat
 host = "127.0.0.1"
 port = "5000"
 
-# GET запросы
-
-# Тест правильного запроса получения всех работ
-print("correct get jobs request test:")
-url = f"http://{host}:{port}/api/jobs"
-response = requests.get(url=url)
-print(
-    f"Http status: {response}, reason: {response.reason}, json: \n{pformat(response.json())}"
-)
-
-# Тест правильного запроса получения работы
-print()
-print("correct get job request test:")
-url = f"http://{host}:{port}/api/jobs/1"
-response = requests.get(url=url)
-print(
-    f"Http status: {response}, reason: {response.reason}, json: \n{pformat(response.json())}"
-)
-
-# Тест неправильного запроса получения работы (неправильный id)
-print()
-print("incorrect get job request test (not a valid id)")
-url = f"http://{host}:{port}/api/jobs/99"
-response = requests.get(url=url)
-print(
-    f"Http status: {response}, reason: {response.reason}, json: \n{pformat(response.json())}"
-)
-
-# Тест неправильного запроса получения работы (строка вместо id)
-print()
-print("incorrect get job request test (not a valid id: string):")
-url = f"http://{host}:{port}/api/jobs/test"
-response = requests.get(url=url)
-print(
-    f"Http status: {response}, reason: {response.reason}, json: \n{pformat(response.json())}"
-)
-
 # POST запросы
 
 # Тест правильного запроса на запись работы
@@ -101,3 +64,41 @@ response = requests.post("http://localhost:5000/api/jobs", json=json)
 print(
     f"Http status: {response}, reason: {response.reason}, json: \n{pformat(response.json())}"
 )
+
+# GET запросы
+
+# Тест правильного запроса получения всех работ
+print("correct get jobs request test:")
+url = f"http://{host}:{port}/api/jobs"
+response = requests.get(url=url)
+print(
+    f"Http status: {response}, reason: {response.reason}, json: \n{pformat(response.json())}"
+)
+
+# Тест правильного запроса получения работы
+print()
+print("correct get job request test:")
+url = f"http://{host}:{port}/api/jobs/1"
+response = requests.get(url=url)
+print(
+    f"Http status: {response}, reason: {response.reason}, json: \n{pformat(response.json())}"
+)
+
+# Тест неправильного запроса получения работы (неправильный id)
+print()
+print("incorrect get job request test (not a valid id)")
+url = f"http://{host}:{port}/api/jobs/99"
+response = requests.get(url=url)
+print(
+    f"Http status: {response}, reason: {response.reason}, json: \n{pformat(response.json())}"
+)
+
+# Тест неправильного запроса получения работы (строка вместо id)
+print()
+print("incorrect get job request test (not a valid id: string):")
+url = f"http://{host}:{port}/api/jobs/test"
+response = requests.get(url=url)
+print(
+    f"Http status: {response}, reason: {response.reason}, json: \n{pformat(response.json())}"
+)
+

@@ -45,7 +45,7 @@ def create_job():
         start_date = datetime.datetime.fromisoformat(request.json["start_date"])
         end_date = datetime.datetime.fromisoformat(request.json["end_date"])
     except (ValueError, TypeError) as e:
-        return make_response(jsonify({"error": f"Invalid data type: {str(e)}"}), 400)
+        return make_response(jsonify({"error": f"invalid data type: {str(e)}"}), 400)
     
     db_sess = db_session.create_session()
     job = Jobs()
