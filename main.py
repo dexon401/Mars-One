@@ -1,5 +1,6 @@
 import datetime
 from flask import Flask, render_template, redirect, request, make_response, jsonify
+from flask_restful import Api
 from flask_login import (
     LoginManager,
     login_user,
@@ -9,12 +10,17 @@ from flask_login import (
 )
 from forms.user import RegisterForm, LoginForm
 from forms.job import NewJobForm
-from data import db_session, jobs_api, user_api
+from data import db_session, jobs_api, user_api, users_resource
 from data.users import User
 from data.jobs import Jobs
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "yandexlyceum_secret_key"
+
+api = Api(app)
+api.add_resource(users_resource.UsersListResourse, "/api/v2/users")
+api.add_resource(users_resource.UsersResource, "/api/v2/users/<int:user_id>")
+
 
 login_manager = LoginManager()
 login_manager.init_app(app)

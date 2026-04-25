@@ -1,4 +1,5 @@
 import sqlalchemy
+from datetime import datetime
 from .db_session import SqlAlchemyBase
 from sqlalchemy import orm
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -18,7 +19,7 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
     address = sqlalchemy.Column(sqlalchemy.String)
     email = sqlalchemy.Column(sqlalchemy.String, unique=True)
     hashed_password = sqlalchemy.Column(sqlalchemy.String)
-    modified_date = sqlalchemy.Column(sqlalchemy.DateTime)
+    modified_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.now())
     jobs = orm.relationship("Jobs", back_populates="user")
     departments = orm.relationship("Department", back_populates="user")
 
