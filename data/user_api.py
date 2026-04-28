@@ -10,14 +10,14 @@ blueprint = flask.Blueprint("user_api", __name__, template_folder="templates")
 
 
 @blueprint.route("/api/user")
-def get_jobs():
+def get_users():
     db_sess = db_session.create_session()
     jobs = db_sess.query(User).all()
     return jsonify([item.to_dict(rules=("-departments", "-jobs")) for item in jobs])
 
 
 @blueprint.route("/api/user/<user_id>")
-def get_job(user_id):
+def get_user(user_id):
     db_sess = db_session.create_session()
     try:
         user = db_sess.get(User, int(user_id))
@@ -31,7 +31,7 @@ def get_job(user_id):
 
 
 @blueprint.route("/api/user", methods=["POST"])
-def create_job():
+def create_user():
     if not request.json:
         return make_response(jsonify({"error": "Empty request"}), 400)
     elif not all(
@@ -80,7 +80,7 @@ def create_job():
 
 
 @blueprint.route("/api/user/<user_id>", methods=["DELETE"])
-def delete_news(user_id):
+def delete_user(user_id):
     try:
         user_id = int(user_id)
     except (ValueError, TypeError) as e:
@@ -95,7 +95,7 @@ def delete_news(user_id):
 
 
 @blueprint.route("/api/user/<user_id>", methods=["PUT"])
-def edit_job(user_id):
+def edit_user(user_id):
     try:
         user_id = int(user_id)
     except (ValueError, TypeError) as e:

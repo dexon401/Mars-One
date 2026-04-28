@@ -1,18 +1,19 @@
 import datetime
-from flask import Flask, render_template, redirect, request, make_response, jsonify
+import os
+
+import requests
+from flask import Flask, jsonify, make_response, redirect, render_template
+from flask_login import LoginManager, login_required, login_user, logout_user
 from flask_restful import Api
-from flask_login import (
-    LoginManager,
-    login_user,
-    logout_user,
-    current_user,
-    login_required,
-)
-from forms.user import RegisterForm, LoginForm
-from forms.job import NewJobForm
+
 from data import db_session, jobs_api, user_api, users_resource
-from data.users import User
 from data.jobs import Jobs
+from data.users import User
+from forms.job import NewJobForm
+from forms.user import LoginForm, RegisterForm
+
+GEOCODER_API_KEY = "8013b162-6b42-4997-9691-77b7074026e0"
+STATIC_MAPS_API_KEY = "f3a0fe3a-b07e-4840-a1da-06f18b2ddf13"
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "yandexlyceum_secret_key"
@@ -90,9 +91,7 @@ def login():
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             return redirect("/")
-        return render_template(
-            "login.html", message="Неправильный логин или пароль", form=form
-        )
+        return render_template("login.html", message="Неправильный логин или пароль", form=form)
     return render_template("login.html", title="Авторизация", form=form)
 
 
@@ -124,7 +123,50 @@ def new_job():
     return render_template("new_job.html", title="Новая работа", form=form)
 
 
+@app.route("/users_show/<int:user_id>")
+def show_user(user_id):
+    response = requests.get(f"http://127.0.0.1:5000/api/v2/users/{user_id}")
+    user = response.json()["user"]
+    if not response.ok:
+        return user
+
+    params = {
+        "apikey": GEOCODER_API_KEY,
+        "geocode": user["from_city"],
+        "lang": "ru_RU",
+        "format": "json",
+    }
+    response = requests.get("https://geocode-maps.yandex.ru/v1", params=params)
+    response_json = response.json()
+    envelope = response_json["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]["boundedBy"]["Envelope"]
+    lon1, lat1 = map(float, envelope["lowerCorner"].split())
+    lon2, lat2 = map(float, envelope["upperCorner"].split())
+
+    spn_lon = abs(lon2 - lon1)
+    spn_lat = abs(lat2 - lat1)
+
+    hometown_coords = response_json["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]["Point"]["pos"].split()
+
+    params = {"apikey": STATIC_MAPS_API_KEY, "ll": f"{hometown_coords[0]},{hometown_coords[1]}", "spn": f"{spn_lon},{spn_lat}"}
+    response = requests.get("https://static-maps.yandex.ru/v1", params=params)
+    if response.ok:
+        os.makedirs("static/img/", exist_ok=True)
+        with open("static/img/image.png", "wb") as file:
+            file.write(response.content)
+    else:
+        return response.reason
+
+    kwargs = {
+        "name": user.get("name"),
+        "surname": user.get("surname"),
+        "from_city": user.get("from_city"),
+        "img_path": "/static/img/image.png",
+    }
+    return render_template("show_user.html", **kwargs)
+
+
 def main():
+    os.makedirs("db", exist_ok=True)
     db_session.global_init("db/mars_explorer.db")
 
     db_sess = db_session.create_session()
@@ -138,6 +180,7 @@ def main():
         user.speciality = "recearch engineer"
         user.address = "module_1"
         user.email = "scott_chief@mars.org"
+        user.from_city = "Москва"
         db_sess.add(user)
 
         user2 = User()
@@ -148,6 +191,7 @@ def main():
         user2.speciality = "mechanical engineer"
         user2.address = "module_2"
         user2.email = "john_smith@mars.org"
+        user2.from_city = "Санкт-Питербург"
         db_sess.add(user2)
 
         user3 = User()
@@ -158,6 +202,7 @@ def main():
         user3.speciality = "biologist"
         user3.address = "module_3"
         user3.email = "jane_johnson@mars.org"
+        user3.from_city = "Екатиренбург"
         db_sess.add(user3)
 
         user4 = User()
@@ -168,6 +213,7 @@ def main():
         user4.speciality = "aeronautics"
         user4.address = "module_4"
         user4.email = "bob_brown@mars.org"
+        user4.from_city = "Красноярск"
         db_sess.add(user4)
 
     if db_sess.query(Jobs).count() == 0:
