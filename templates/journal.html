@@ -6,9 +6,9 @@
                 <h2>Works Log</h2>
             </div>
         </div>
-        <a class="btn btn-dark" href="/departments">To Departments</a>
+        <a class="btn btn-dark mb-3" href="/departments">To Departments</a>
         {% if current_user.is_authenticated %}
-            <a class="btn btn-dark" href="new_job">Add a job</a>
+            <a class="btn btn-dark mb-3" href="new_job">Add a job</a>
         {% endif %}
         {% for job, leader in data %}
             {% if current_user.is_authenticated and (current_user.id == 1 or current_user.id == leader.id) %}
@@ -29,7 +29,7 @@
                 <div class="col">List of collaborators</div>
                 <div class="col">Is finished</div>
             </div>
-            <div class="row" style="background-color: lightblue;">
+            <div class="row mb-5" style="background-color: lightblue;">
                 <div class="col">{{ job.job }}</div>
                 <div class="col">{{ leader.name }} {{ leader.surname }}</div>
                 <div class="col">{{ job.work_size }}</div>
