@@ -1,13 +1,25 @@
 {% extends 'base.html' %}
 {% block content %}
     <div class="container">
-        <a class="btn btn-primary" href="new_job">Add a job</a>
+        {% if current_user.is_authenticated %}
+            <a class="btn btn-primary" href="new_job">Add a job</a>
+        {% endif %}
         <div class="row">
             <div class="col text-center">
                 <h2>Works Log</h2>
             </div>
         </div>
         {% for job, leader in data %}
+            {% if current_user.is_authenticated and (current_user.id == 1 or current_user.id == leader.id) %}
+                <div class="row">
+                    <div class="col-auto">
+                        <div class="btn-group">
+                            <a href="edit_job/{{ job.id }}", class="btn btn-warning">Edit job</a>
+                            <a href="delete_job/{{ job.id }}", class="btn btn-danger">Delete job</a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
             <div class="row"><div class="col"><h3>Action # {{ loop.index }}</h3></div></div>
             <div class="row" style="background-color: darkgray;">
                 <div class="col">Title of activity</div>
