@@ -16,7 +16,7 @@ from data import db_session, jobs_api, jobs_resource, user_api, users_resource
 from data.departments import Department as Department
 from data.jobs import Jobs
 from data.users import User
-from forms.job import NewJobForm
+from forms.job import NewJobForm, DelJobForm
 from forms.user import LoginForm, RegisterForm
 
 GEOCODER_API_KEY = "8013b162-6b42-4997-9691-77b7074026e0"
@@ -167,6 +167,26 @@ def edit_job(job_id):
         form.is_finished.data = job.is_finished
     return render_template(
         "new_job.html", title="Редактирование работы", header="Edit job", form=form
+    )
+
+
+@app.route("/delete_job/<int:job_id>", methods=["GET", "POST"])
+def delete_job(job_id):
+    db_sess = db_session.create_session()
+    job = db_sess.get(Jobs, job_id)
+    if not job:
+        return make_response(jsonify({"error": "Not Found"}), 404)
+    if not current_user.is_authenticated or not (
+        current_user.id == 1 or current_user.id == job.team_leader
+    ):
+        return make_response(jsonify({"error": "Forbidden"}), 403)
+    form = DelJobForm()
+    if form.validate_on_submit():
+        db_sess.delete(job)
+        db_sess.commit()
+        return redirect("/")
+    return render_template(
+        "delete_job.html", title="Редактирование работы", form=form
     )
 
 

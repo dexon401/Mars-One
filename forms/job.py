@@ -18,3 +18,6 @@ class NewJobForm(FlaskForm):
     end_date = DateField("Date of work finish")
     is_finished = BooleanField("Is job finished?")
     submit = SubmitField("Submit")
+
+class DelJobForm(FlaskForm):
+    submit = SubmitField("DELETE JOB")
