@@ -1,6 +1,12 @@
 from flask_wtf import FlaskForm
-from wtforms import TextAreaField, IntegerField, DateField, StringField, SubmitField, BooleanField
-from data import db_session
+from wtforms import (
+    BooleanField,
+    DateField,
+    IntegerField,
+    StringField,
+    SubmitField,
+    TextAreaField,
+)
 
 
 class NewJobForm(FlaskForm):
@@ -12,4 +18,3 @@ class NewJobForm(FlaskForm):
     end_date = DateField("Date of work finish")
     is_finished = BooleanField("Is job finished?")
     submit = SubmitField("Submit")
-    

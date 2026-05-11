@@ -2,15 +2,20 @@ import datetime
 import os
 
 import requests
-from flask import Flask, jsonify, make_response, redirect, render_template
-from flask_login import LoginManager, login_required, login_user, logout_user
+from flask import Flask, jsonify, make_response, redirect, render_template, request
+from flask_login import (
+    LoginManager,
+    current_user,
+    login_required,
+    login_user,
+    logout_user,
+)
 from flask_restful import Api
 
-from data import db_session, jobs_api, user_api, users_resource, jobs_resource
+from data import db_session, jobs_api, jobs_resource, user_api, users_resource
+from data.departments import Department as Department
 from data.jobs import Jobs
 from data.users import User
-from data.departments import Department as Department
-
 from forms.job import NewJobForm
 from forms.user import LoginForm, RegisterForm
 
@@ -95,7 +100,9 @@ def login():
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             return redirect("/")
-        return render_template("login.html", message="Неправильный логин или пароль", form=form)
+        return render_template(
+            "login.html", message="Неправильный логин или пароль", form=form
+        )
     return render_template("login.html", title="Авторизация", form=form)
 
 
@@ -124,7 +131,43 @@ def new_job():
         db_sess.commit()
         return redirect("/")
 
-    return render_template("new_job.html", title="Новая работа", form=form)
+    return render_template(
+        "new_job.html", title="Новая работа", header="New job", form=form
+    )
+
+
+@app.route("/edit_job/<int:job_id>", methods=["GET", "POST"])
+def edit_job(job_id):
+    db_sess = db_session.create_session()
+    job = db_sess.get(Jobs, job_id)
+    if not job:
+        return make_response(jsonify({"error": "Not Found"}), 404)
+    if not current_user.is_authenticated or not (
+        current_user.id == 1 or current_user.id == job.team_leader
+    ):
+        return make_response(jsonify({"error": "Forbidden"}), 403)
+    form = NewJobForm()
+    if form.validate_on_submit():
+        job.job = form.job.data
+        job.work_size = form.work_size.data
+        job.team_leader = form.team_leader.data
+        job.collaborators = form.collaborators.data
+        job.start_date = form.start_date.data
+        job.end_date = form.end_date.data
+        job.is_finished = form.is_finished.data
+        db_sess.commit()
+        return redirect("/")
+    elif request.method == "GET":
+        form.job.data = job.job
+        form.work_size.data = job.work_size
+        form.team_leader.data = job.team_leader
+        form.collaborators.data = job.collaborators
+        form.start_date.data = job.start_date.date() if job.start_date else None
+        form.end_date.data = job.end_date.date() if job.end_date else None
+        form.is_finished.data = job.is_finished
+    return render_template(
+        "new_job.html", title="Редактирование работы", header="Edit job", form=form
+    )
 
 
 @app.route("/users_show/<int:user_id>")
@@ -142,16 +185,24 @@ def show_user(user_id):
     }
     response = requests.get("https://geocode-maps.yandex.ru/v1", params=params)
     response_json = response.json()
-    envelope = response_json["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]["boundedBy"]["Envelope"]
+    envelope = response_json["response"]["GeoObjectCollection"]["featureMember"][0][
+        "GeoObject"
+    ]["boundedBy"]["Envelope"]
     lon1, lat1 = map(float, envelope["lowerCorner"].split())
     lon2, lat2 = map(float, envelope["upperCorner"].split())
 
     spn_lon = abs(lon2 - lon1)
     spn_lat = abs(lat2 - lat1)
 
-    hometown_coords = response_json["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]["Point"]["pos"].split()
+    hometown_coords = response_json["response"]["GeoObjectCollection"]["featureMember"][
+        0
+    ]["GeoObject"]["Point"]["pos"].split()
 
-    params = {"apikey": STATIC_MAPS_API_KEY, "ll": f"{hometown_coords[0]},{hometown_coords[1]}", "spn": f"{spn_lon},{spn_lat}"}
+    params = {
+        "apikey": STATIC_MAPS_API_KEY,
+        "ll": f"{hometown_coords[0]},{hometown_coords[1]}",
+        "spn": f"{spn_lon},{spn_lat}",
+    }
     response = requests.get("https://static-maps.yandex.ru/v1", params=params)
     if response.ok:
         os.makedirs("static/img/", exist_ok=True)
@@ -185,6 +236,7 @@ def main():
         user.address = "module_1"
         user.email = "scott_chief@mars.org"
         user.from_city = "Москва"
+        user.set_password("admin")
         db_sess.add(user)
 
         user2 = User()
@@ -227,6 +279,7 @@ def main():
         job.work_size = 15
         job.collaborators = "2, 3"
         job.start_date = datetime.datetime.now()
+        job.end_date = datetime.datetime.now() + datetime.timedelta(days=10)
         job.is_finished = False
         db_sess.add(job)
 
@@ -236,6 +289,7 @@ def main():
         job2.work_size = 10
         job2.collaborators = "1, 3"
         job2.start_date = datetime.datetime.now()
+        job2.end_date = datetime.datetime.now() + datetime.timedelta(days=10)
         job2.is_finished = True
         db_sess.add(job2)
 
