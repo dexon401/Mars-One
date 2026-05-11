@@ -16,7 +16,8 @@ from data import db_session, jobs_api, jobs_resource, user_api, users_resource
 from data.departments import Department as Department
 from data.jobs import Jobs
 from data.users import User
-from forms.job import NewJobForm, DelJobForm
+from forms.department import DelDepForm, NewDepForm
+from forms.job import DelJobForm, NewJobForm
 from forms.user import LoginForm, RegisterForm
 
 GEOCODER_API_KEY = "8013b162-6b42-4997-9691-77b7074026e0"
@@ -185,9 +186,83 @@ def delete_job(job_id):
         db_sess.delete(job)
         db_sess.commit()
         return redirect("/")
+    return render_template("delete_job.html", title="Удаление работы", form=form)
+
+
+@app.route("/departments")
+def departments():
+    db_sess = db_session.create_session()
+    data = []
+    for department in db_sess.query(Department).all():
+        chief = db_sess.get(User, department.chief)
+        data.append((department, chief))
+    return render_template("departments.html", title="List of Departments", data=data)
+
+
+@app.route("/new_department", methods=["GET", "POST"])
+def new_department():
+    form = NewDepForm()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        department = Department()
+        department.title = form.title.data
+        department.chief = form.chief.data
+        department.members = form.members.data
+        department.email = form.email.data
+        db_sess.add(department)
+
+        db_sess.commit()
+        return redirect("/departments")
+
     return render_template(
-        "delete_job.html", title="Редактирование работы", form=form
+        "new_department.html", title="Новый Депаратмент", header="New department", form=form
     )
+
+
+@app.route("/edit_department/<int:department_id>", methods=["GET", "POST"])
+def edit_department(department_id):
+    db_sess = db_session.create_session()
+    department = db_sess.get(Department, department_id)
+    if not department:
+        return make_response(jsonify({"error": "Not Found"}), 404)
+    if not current_user.is_authenticated or not (
+        current_user.id == 1 or current_user.id == department.chief
+    ):
+        return make_response(jsonify({"error": "Forbidden"}), 403)
+    form = NewDepForm()
+    if form.validate_on_submit():
+        department.title = form.title.data
+        department.chief = form.chief.data
+        department.members = form.members.data
+        department.email = form.email.data
+        db_sess.commit()
+        return redirect("/departments")
+    elif request.method == "GET":
+        form.title.data = department.title
+        form.chief.data = department.chief
+        form.members.data = department.members
+        form.email.data = department.email
+    return render_template(
+        "new_department.html", title="Редактирование Департмента", header="Edit department", form=form
+    )
+
+
+@app.route("/delete_department/<int:department_id>", methods=["GET", "POST"])
+def delete_department(department_id):
+    db_sess = db_session.create_session()
+    department = db_sess.get(Department, department_id)
+    if not department:
+        return make_response(jsonify({"error": "Not Found"}), 404)
+    if not current_user.is_authenticated or not (
+        current_user.id == 1 or current_user.id == department.chief
+    ):
+        return make_response(jsonify({"error": "Forbidden"}), 403)
+    form = DelDepForm()
+    if form.validate_on_submit():
+        db_sess.delete(department)
+        db_sess.commit()
+        return redirect("/departments")
+    return render_template("delete_department.html", title="Удаление Департмента", form=form)
 
 
 @app.route("/users_show/<int:user_id>")
@@ -312,6 +387,21 @@ def main():
         job2.end_date = datetime.datetime.now() + datetime.timedelta(days=10)
         job2.is_finished = True
         db_sess.add(job2)
+
+    if db_sess.query(Department).count() == 0:
+        dept1 = Department()
+        dept1.title = "Engineering"
+        dept1.chief = 1
+        dept1.members = "1, 2, 3"
+        dept1.email = "engineering@mars.com"
+        db_sess.add(dept1)
+
+        dept2 = Department()
+        dept2.title = "Human Resources"
+        dept2.chief = 2
+        dept2.members = "2, 4"
+        dept2.email = "hr@mars.com"
+        db_sess.add(dept2)
 
     db_sess.commit()
 
