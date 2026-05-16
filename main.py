@@ -16,7 +16,7 @@ from data import db_session, jobs_api, jobs_resource, user_api, users_resource
 from data.departments import Department as Department
 from data.jobs import Jobs
 from data.users import User
-from data.hazard import Hazard, association_table
+from data.hazard import Hazard
 from forms.department import DelDepForm, NewDepForm
 from forms.job import DelJobForm, NewJobForm
 from forms.user import LoginForm, RegisterForm
@@ -128,6 +128,8 @@ def new_job():
         job.collaborators = form.collaborators.data
         job.start_date = form.start_date.data
         job.end_date = form.end_date.data
+        if not job.hazard:
+            job.hazard.append(db_sess.get(Hazard, 1))
         job.is_finished = form.is_finished.data
         db_sess.add(job)
 
