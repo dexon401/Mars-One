@@ -3,6 +3,7 @@ from sqlalchemy import orm
 from sqlalchemy_serializer import SerializerMixin
 
 from .db_session import SqlAlchemyBase
+from .hazard import association_table
 
 
 class Jobs(SqlAlchemyBase, SerializerMixin):
@@ -17,6 +18,7 @@ class Jobs(SqlAlchemyBase, SerializerMixin):
     end_date = sqlalchemy.Column(sqlalchemy.DateTime)
     is_finished = sqlalchemy.Column(sqlalchemy.Boolean)
     user = orm.relationship("User")
+    hazard = orm.relationship("Hazard", secondary=association_table, backref="jobs")
 
     def __repr__(self):
         return f"<job> {self.job}"
