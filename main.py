@@ -16,6 +16,7 @@ from data import db_session, jobs_api, jobs_resource, user_api, users_resource
 from data.departments import Department as Department
 from data.jobs import Jobs
 from data.users import User
+from data.hazard import Hazard, association_table
 from forms.department import DelDepForm, NewDepForm
 from forms.job import DelJobForm, NewJobForm
 from forms.user import LoginForm, RegisterForm
@@ -59,7 +60,8 @@ def index():
     data = []
     for job in db_sess.query(Jobs).all():
         leader = db_sess.query(User).filter(User.id == job.team_leader).first()
-        data.append((job, leader))
+        hazard = ', '.join([hazard.name for hazard in job.hazard])
+        data.append((job, leader, hazard))
     return render_template("journal.html", data=data)
 
 
@@ -320,6 +322,17 @@ def main():
     db_session.global_init("db/mars_explorer.db")
 
     db_sess = db_session.create_session()
+    
+    if db_sess.query(Hazard).count() == 0:
+        haz = Hazard()
+        haz.name = "1"
+        db_sess.add(haz)
+        haz = Hazard()
+        haz.name = "2"
+        db_sess.add(haz)
+        haz = Hazard()
+        haz.name = "3"
+        db_sess.add(haz)
 
     if db_sess.query(User).count() == 0:
         user = User()
@@ -376,6 +389,7 @@ def main():
         job.start_date = datetime.datetime.now()
         job.end_date = datetime.datetime.now() + datetime.timedelta(days=10)
         job.is_finished = False
+        job.hazard.append(db_sess.get(Hazard, 1))
         db_sess.add(job)
 
         job2 = Jobs()
@@ -386,6 +400,7 @@ def main():
         job2.start_date = datetime.datetime.now()
         job2.end_date = datetime.datetime.now() + datetime.timedelta(days=10)
         job2.is_finished = True
+        job2.hazard.append(db_sess.get(Hazard, 2))
         db_sess.add(job2)
 
     if db_sess.query(Department).count() == 0:
